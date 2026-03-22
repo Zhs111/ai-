@@ -51,6 +51,8 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { GoogleGenAI, Type } from "@google/genai";
 import { AIConfig, AIProvider, AI_MODELS, DEFAULT_API_URLS, loadAIConfig, saveAIConfig, isAIConfigValid, aiService } from './lib/ai-config';
+import { useAuth } from './hooks/useAuth';
+import Auth from './components/Auth';
 
 // --- Utility ---
 const fileToDataUrl = (file: File): Promise<string> => {
@@ -2841,7 +2843,7 @@ const Profile = ({
   );
 };
 
-const Settings = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (page: Page) => void }) => {
+const Settings = ({ onBack, onNavigate, isAuthenticated, onLogout }: { onBack: () => void, onNavigate: (page: Page) => void, isAuthenticated: boolean, onLogout: () => void }) => {
   const [toast, setToast] = useState<string | null>(null);
   const [cacheSize, setCacheSize] = useState('124 MB');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -2937,12 +2939,21 @@ const Settings = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (pag
         ))}
 
         <div className="pt-8 px-2">
-          <button 
-            onClick={() => setShowLogoutConfirm(true)}
-            className="w-full bg-gray-100 text-[#FF6B00] font-bold py-4 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all active:scale-95"
-          >
-            退出登录
-          </button>
+          {isAuthenticated ? (
+            <button 
+              onClick={() => setShowLogoutConfirm(true)}
+              className="w-full bg-gray-100 text-[#FF6B00] font-bold py-4 rounded-2xl hover:bg-red-50 hover:text-red-500 transition-all active:scale-95"
+            >
+              退出登录
+            </button>
+          ) : (
+            <button 
+              onClick={() => onNavigate('login')}
+              className="w-full bg-gradient-to-r from-[#FF6B00] to-[#FF8C42] text-white font-bold py-4 rounded-2xl shadow-lg shadow-orange-200 hover:shadow-xl transition-all active:scale-95"
+            >
+              登录 / 注册
+            </button>
+          )}
         </div>
       </main>
 
@@ -2984,8 +2995,9 @@ const Settings = ({ onBack, onNavigate }: { onBack: () => void, onNavigate: (pag
               <p className="text-gray-500 text-center text-sm mb-8">退出后将无法同步您的创作进度和收藏作品。</p>
               <div className="flex flex-col gap-3">
                 <button 
-                  onClick={() => {
+                  onClick={async () => {
                     setShowLogoutConfirm(false);
+                    await onLogout();
                     setToast('已安全退出');
                     setTimeout(() => window.location.reload(), 1500);
                   }}
@@ -3645,12 +3657,20 @@ export default function App() {
   const [selectedGame, setSelectedGame] = useState<Game | null>(null);
   const [userGames, setUserGames] = useState<Game[]>([]);
   const [testReturnPage, setTestReturnPage] = useState<Page | null>(null);
-  const [currentUser, setCurrentUser] = useState<any>({
-    name: '梦想编织者',
-    bio: '见习创作者，正在探索 AI 创作的无限可能。',
-    avatar: 'https://picsum.photos/seed/user/200/200',
-    email: 'felix@example.com'
-  });
+  const { user, isLoading, isAuthenticated, logout } = useAuth();
+  const [showAuth, setShowAuth] = useState(false);
+  
+  const currentUser = user ? {
+    name: user.username,
+    bio: user.bio || '见习创作者，正在探索 AI 创作的无限可能。',
+    avatar: user.avatar_url || 'https://picsum.photos/seed/user/200/200',
+    email: user.email
+  } : {
+    name: '访客',
+    bio: '登录后开始你的创作之旅',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=guest',
+    email: ''
+  };
 
   const [favoriteIds, setFavoriteIds] = useState<string[]>([]);
   const [archiveIds, setArchiveIds] = useState<string[]>(['3', '4']);
@@ -3803,15 +3823,12 @@ export default function App() {
           />
         );
       case 'settings':
-        return <Settings onBack={() => setCurrentPage('profile')} onNavigate={setCurrentPage} />;
+        return <Settings onBack={() => setCurrentPage('profile')} onNavigate={setCurrentPage} isAuthenticated={isAuthenticated} onLogout={logout} />;
       case 'login':
         return (
-          <Login 
+          <Auth 
             onBack={() => setCurrentPage('settings')} 
-            onLogin={(user) => {
-              setCurrentUser(user);
-              setCurrentPage('profile');
-            }} 
+            onSuccess={() => setCurrentPage('profile')} 
           />
         );
       case 'account-management':
