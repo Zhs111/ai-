@@ -6,11 +6,22 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "tsc && vite build",
+    "build:dev": "tsc && vite build --mode development",
+    "build:staging": "tsc && vite build --mode staging",
+    "build:prod": "tsc && vite build --mode production",
     "preview": "vite preview",
+    "preview:staging": "vite preview --mode staging",
+    "preview:prod": "vite preview --mode production",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "server": "npm run --prefix server dev",
-    "server:build": "npm run --prefix server build"
+    "server:build": "npm run --prefix server build",
+    "deploy:staging": "npm run build:staging && echo 'Ready to deploy to staging'",
+    "deploy:prod": "npm run build:prod && echo 'Ready to deploy to production'",
+    "migrate:create": "node scripts/migrate.js create",
+    "migrate:up": "node scripts/migrate.js up",
+    "migrate:down": "node scripts/migrate.js down",
+    "migrate:status": "node scripts/migrate.js status"
   },
   "dependencies": {
     "@google/genai": "^1.46.0",

@@ -53,6 +53,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { AIConfig, AIProvider, AI_MODELS, DEFAULT_API_URLS, loadAIConfig, saveAIConfig, isAIConfigValid, aiService } from './lib/ai-config';
 import { useAuth } from './hooks/useAuth';
 import Auth from './components/Auth';
+import EnvironmentSwitcher from './components/EnvironmentSwitcher';
 
 // --- Utility ---
 const fileToDataUrl = (file: File): Promise<string> => {
@@ -3844,7 +3845,10 @@ export default function App() {
           <EditProfile 
             onBack={() => setCurrentPage('profile')} 
             user={currentUser} 
-            onSave={(data) => setCurrentUser(prev => ({ ...prev, ...data }))} 
+            onSave={(data) => {
+              // 更新用户信息
+              console.log('更新用户信息:', data);
+            }} 
           />
         );
       default:
@@ -3869,6 +3873,9 @@ export default function App() {
       {['discovery', 'profile'].includes(currentPage) && (
         <Navbar active={currentPage} onChange={setCurrentPage} />
       )}
+      
+      {/* 环境切换组件 */}
+      <EnvironmentSwitcher />
     </div>
   );
 }

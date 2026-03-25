@@ -6,3 +6,10 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# 个人笔记文件
+*.md
+!README.md
+
+# 个人笔记文件夹
+个人笔记/
